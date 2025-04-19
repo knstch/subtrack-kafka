@@ -1,4 +1,4 @@
-package kafka
+package topics
 
 type KafkaTopic string
 

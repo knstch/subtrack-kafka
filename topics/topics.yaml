@@ -1,0 +1,5 @@
+topics:
+  - name: user.created
+    partitions: 3
+    replication: 1
+    description: "New user created"

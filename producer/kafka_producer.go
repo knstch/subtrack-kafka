@@ -3,6 +3,7 @@ package producer
 import (
 	"context"
 	"encoding/json"
+	"net"
 
 	"github.com/segmentio/kafka-go"
 
@@ -10,14 +11,14 @@ import (
 )
 
 type Producer struct {
-	Addr     string
-	Balancer *kafka.LeastBytes
+	addr     net.Addr
+	balancer *kafka.LeastBytes
 }
 
 func NewProducer(addr string) *Producer {
 	return &Producer{
-		Addr:     addr,
-		Balancer: &kafka.LeastBytes{},
+		addr:     kafka.TCP(addr),
+		balancer: &kafka.LeastBytes{},
 	}
 }
 
@@ -28,9 +29,9 @@ func (p *Producer) SendMessage(topic kafkaPkg.KafkaTopic, key string, value inte
 	}
 
 	writer := kafka.Writer{
-		Addr:     kafka.TCP(p.Addr),
+		Addr:     p.addr,
 		Topic:    topic.String(),
-		Balancer: p.Balancer,
+		Balancer: p.balancer,
 	}
 
 	defer writer.Close()

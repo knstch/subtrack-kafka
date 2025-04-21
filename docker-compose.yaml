@@ -1,3 +1,4 @@
+version: '3.8'
 services:
   kafka:
     image: confluentinc/cp-kafka:7.5.0
@@ -25,14 +26,17 @@ services:
           kafka-storage format --ignore-formatted -t $$CLUSTER_ID -c /etc/kafka/kafka.properties
         fi
         /etc/confluent/docker/run
-  kafka-ui:
-    image: provectuslabs/kafka-ui:latest
-    container_name: kafka-ui
-    ports:
-      - "8080:8080"
-    environment:
-      KAFKA_CLUSTERS_0_NAME: "subtrack-cluster"
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka:9092"
-
+  create-topics:
+    build:
+      context: .
+      dockerfile: create-topics.Dockerfile
+    restart: "no"
+    deploy:
+      restart_policy:
+        condition: none
+    env_file:
+      - .env
+    depends_on:
+      - kafka
     volumes:
-      - ./data:/tmp/kraft-combined-logs
+      - ./topics/topics.yaml:/topics.yaml

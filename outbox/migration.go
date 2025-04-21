@@ -3,7 +3,7 @@ package outbox
 import "time"
 
 const (
-	OutboxMigratonUp = `
+	OutboxMigrationUp = `
 	CREATE TABLE IF NOT EXISTS outbox (
 	    id SERIAL PRIMARY KEY,
 	    topic VARCHAR(255) NOT NULL,

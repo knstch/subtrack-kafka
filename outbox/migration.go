@@ -23,7 +23,7 @@ type Outbox struct {
 	Topic     string
 	Key       string
 	Payload   []byte
-	SentAt    time.Time
+	SentAt    *time.Time
 	CreatedAt time.Time
 }
 

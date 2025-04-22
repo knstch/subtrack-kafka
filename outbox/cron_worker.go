@@ -11,42 +11,21 @@ import (
 	kafkaPkg "github.com/knstch/subtrack-kafka/topics"
 
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-type OutboxCronWorker struct {
+type OutboxListener struct {
 	cron     *cron.Cron
 	producer *producer.Producer
 	db       *gorm.DB
 }
 
-func NewOutboxCronWorker(kafkaAddr string, dbDsn string) (*cron.Cron, error) {
+func NewOutboxListener(kafkaAddr string, dbDsn string, lg *zap.Logger) (*cron.Cron, error) {
 	db, err := gorm.Open(postgres.Open(dbDsn), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}
 
 	cronProducer := producer.NewProducer(kafkaAddr)
-
-	encoderConfig := zap.NewProductionEncoderConfig()
-	encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
-	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	core := zapcore.NewTee(
-		zapcore.NewCore(zapcore.NewJSONEncoder(encoderConfig), zapcore.AddSync(&lumberjack.Logger{
-			Filename:   `./log/outbox_logfile.log`,
-			MaxSize:    100,
-			MaxBackups: 3,
-			MaxAge:     28,
-		}), zap.InfoLevel),
-		zapcore.NewCore(zapcore.NewJSONEncoder(encoderConfig), zapcore.AddSync(&lumberjack.Logger{
-			Filename:   `./log/outbox_error.log`,
-			MaxSize:    100,
-			MaxBackups: 3,
-			MaxAge:     28,
-		}), zap.ErrorLevel),
-	)
-	lg := zap.New(core)
 
 	c := cron.New()
 	if _, err = c.AddFunc("@every 10s", func() {
@@ -70,7 +49,7 @@ func NewOutboxCronWorker(kafkaAddr string, dbDsn string) (*cron.Cron, error) {
 			}
 		}
 
-		lg.Info("cycle is done!")
+		lg.Info("cycle is done!✨")
 	}); err != nil {
 		return nil, err
 	}

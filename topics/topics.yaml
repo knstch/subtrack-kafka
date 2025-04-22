@@ -3,3 +3,7 @@ topics:
     partitions: 3
     replication: 1
     description: "New user created"
+  - name: user.resetPassword
+    partitions: 3
+    replication: 1
+    description: "Reset password"

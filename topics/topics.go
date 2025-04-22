@@ -4,8 +4,10 @@ package topics
 
 const (
 	TopicUserCreated KafkaTopic = "user.created"
+	TopicUserResetPassword KafkaTopic = "user.resetPassword"
 )
 
 var TopicDescriptions = map[KafkaTopic]string{
 	TopicUserCreated: "New user created",
+	TopicUserResetPassword: "Reset password",
 }

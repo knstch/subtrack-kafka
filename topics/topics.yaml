@@ -7,3 +7,7 @@ topics:
     partitions: 3
     replication: 1
     description: "Reset password"
+  - name: wallets.CreateWallet
+    partitions: 3
+    replication: 1
+    description: "Create wallet for new user"

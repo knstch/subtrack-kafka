@@ -63,5 +63,15 @@ func main() {
 			fmt.Println("❌", err)
 		}
 	}
+
+	err = conn.CreateTopics(kafka.TopicConfig{
+		Topic:             "__consumer_offsets",
+		NumPartitions:     50,
+		ReplicationFactor: 1,
+	})
+	if err != nil {
+		log.Printf("⚠️ (Optional) Couldn't create __consumer_offsets: %v\n", err)
+	}
+
 	fmt.Println("✅ Done")
 }

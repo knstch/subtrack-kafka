@@ -1,4 +1,4 @@
-FROM golang:1.21
+FROM golang:1.24
 
 WORKDIR /app
 
@@ -8,4 +8,4 @@ RUN go mod init create-topics && \
     go get github.com/segmentio/kafka-go gopkg.in/yaml.v3 && \
     go build -o create-topics .
 
-CMD ["./create-topics"]
+CMD ["sleep 10 && ./create-topics"]

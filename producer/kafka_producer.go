@@ -2,7 +2,6 @@ package producer
 
 import (
 	"context"
-	"encoding/json"
 	"net"
 
 	"github.com/segmentio/kafka-go"
@@ -22,12 +21,7 @@ func NewProducer(addr string) *Producer {
 	}
 }
 
-func (p *Producer) SendMessage(topic kafkaPkg.KafkaTopic, key string, value interface{}) error {
-	body, err := json.Marshal(value)
-	if err != nil {
-		return err
-	}
-
+func (p *Producer) SendMessage(topic kafkaPkg.KafkaTopic, key string, value []byte) error {
 	writer := kafka.Writer{
 		Addr:     p.addr,
 		Topic:    topic.String(),
@@ -36,10 +30,10 @@ func (p *Producer) SendMessage(topic kafkaPkg.KafkaTopic, key string, value inte
 
 	defer writer.Close()
 
-	err = writer.WriteMessages(context.Background(),
+	err := writer.WriteMessages(context.Background(),
 		kafka.Message{
 			Key:   []byte(key),
-			Value: body,
+			Value: value,
 		},
 	)
 	if err != nil {

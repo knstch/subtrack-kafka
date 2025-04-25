@@ -17,7 +17,7 @@ type Consumer struct {
 	router *message.Router
 }
 
-func NewConsumer(brokerAddr, group string, lg log.Logger) (*Consumer, error) {
+func NewConsumer(brokerAddr, group string, lg *log.Logger) (*Consumer, error) {
 	saramaConfig := sarama.NewConfig()
 	saramaConfig.Consumer.Offsets.Initial = sarama.OffsetOldest
 
@@ -28,13 +28,13 @@ func NewConsumer(brokerAddr, group string, lg log.Logger) (*Consumer, error) {
 			ConsumerGroup:         group,
 			OverwriteSaramaConfig: saramaConfig,
 		},
-		&LoggerConsumerAdapter{lg: &lg},
+		&LoggerConsumerAdapter{lg: lg},
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	router, err := message.NewRouter(message.RouterConfig{}, &LoggerConsumerAdapter{lg: &lg})
+	router, err := message.NewRouter(message.RouterConfig{}, &LoggerConsumerAdapter{lg: lg})
 	if err != nil {
 		lg.Error("error initializing router", err)
 		return nil, err

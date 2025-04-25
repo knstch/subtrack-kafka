@@ -3,11 +3,11 @@ package consumer
 import (
 	"context"
 	"fmt"
-	"log"
 
-	"github.com/ThreeDotsLabs/watermill"
+	"github.com/IBM/sarama"
 	"github.com/ThreeDotsLabs/watermill-kafka/v3/pkg/kafka"
 	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/knstch/subtrack-libs/log"
 
 	"github.com/knstch/subtrack-kafka/topics"
 )
@@ -17,22 +17,27 @@ type Consumer struct {
 	router *message.Router
 }
 
-func NewConsumer(brokerAddr, group string, lg watermill.LoggerAdapter) (*Consumer, error) {
+func NewConsumer(brokerAddr, group string, lg log.Logger) (*Consumer, error) {
+	saramaConfig := sarama.NewConfig()
+	saramaConfig.Consumer.Offsets.Initial = sarama.OffsetOldest
+
 	sub, err := kafka.NewSubscriber(
 		kafka.SubscriberConfig{
-			Brokers:       []string{brokerAddr},
-			Unmarshaler:   kafka.DefaultMarshaler{},
-			ConsumerGroup: group,
+			Brokers:               []string{brokerAddr},
+			Unmarshaler:           kafka.DefaultMarshaler{},
+			ConsumerGroup:         group,
+			OverwriteSaramaConfig: saramaConfig,
 		},
-		lg,
+		&LoggerConsumerAdapter{lg: &lg},
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	router, err := message.NewRouter(message.RouterConfig{}, lg)
+	router, err := message.NewRouter(message.RouterConfig{}, &LoggerConsumerAdapter{lg: &lg})
 	if err != nil {
-		log.Fatalf("router error: %v", err)
+		lg.Error("error initializing router", err)
+		return nil, err
 	}
 
 	return &Consumer{

@@ -26,6 +26,8 @@ services:
           kafka-storage format --ignore-formatted -t $$CLUSTER_ID -c /etc/kafka/kafka.properties
         fi
         /etc/confluent/docker/run
+    networks:
+      - subtrack-net
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: kafka-ui
@@ -37,6 +39,8 @@ services:
       - DYNAMIC_CONFIG_ENABLED=true
     depends_on:
       - kafka
+    networks:
+      - subtrack-net
   create-topics:
     build:
       context: .
@@ -51,3 +55,9 @@ services:
       - kafka
     volumes:
       - ./topics/topics.yaml:/topics.yaml
+    networks:
+      - subtrack-net
+networks:
+  subtrack-net:
+    name: subtrack-net
+    driver: bridge

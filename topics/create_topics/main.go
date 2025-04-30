@@ -15,15 +15,26 @@ type Topic struct {
 	Name        string `yaml:"name"`
 	Partitions  int    `yaml:"partitions"`
 	Replication int    `yaml:"replication"`
+	Description string `yaml:"description"`
 }
 
-type TopicFile struct {
-	Topics []Topic `yaml:"topics"`
+type TopicGroups struct {
+	SubtrackTopics []Topic `yaml:"subtrack-topics"`
+	DexTopics      []Topic `yaml:"dex-topics"`
+}
+
+type TopicsYAML struct {
+	Topics TopicGroups `yaml:"topics"`
 }
 
 func main() {
-	broker := os.Getenv("KAFKA_BROKER")
-	if broker == "" {
+	defaultBroker := os.Getenv("KAFKA_BROKER")
+	if defaultBroker == "" {
+		fmt.Println("❌ KAFKA_BROKER not set")
+		os.Exit(1)
+	}
+	dexBroker := os.Getenv("KAFKA_DEX_BROKER")
+	if dexBroker == "" {
 		fmt.Println("❌ KAFKA_BROKER not set")
 		os.Exit(1)
 	}
@@ -41,20 +52,20 @@ func main() {
 		panic(err)
 	}
 
-	var cfg TopicFile
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
+	var cfg TopicsYAML
+	if err = yaml.Unmarshal(data, &cfg); err != nil {
 		panic(err)
 	}
 
-	conn, err := kafka.Dial("tcp", broker)
+	connDefaultBroker, err := kafka.Dial("tcp", defaultBroker)
 	if err != nil {
 		panic(err)
 	}
-	defer conn.Close()
+	defer connDefaultBroker.Close()
 
-	for _, topic := range cfg.Topics {
-		fmt.Println("🌀 Creating topic:", topic.Name)
-		err := conn.CreateTopics(kafka.TopicConfig{
+	for _, topic := range cfg.Topics.SubtrackTopics {
+		fmt.Println("🌀 Creating subtrack topic:", topic.Name)
+		err = connDefaultBroker.CreateTopics(kafka.TopicConfig{
 			Topic:             topic.Name,
 			NumPartitions:     topic.Partitions,
 			ReplicationFactor: topic.Replication,
@@ -64,7 +75,34 @@ func main() {
 		}
 	}
 
-	err = conn.CreateTopics(kafka.TopicConfig{
+	err = connDefaultBroker.CreateTopics(kafka.TopicConfig{
+		Topic:             "__consumer_offsets",
+		NumPartitions:     50,
+		ReplicationFactor: 1,
+	})
+	if err != nil {
+		log.Printf("⚠️ (Optional) Couldn't create __consumer_offsets: %v\n", err)
+	}
+
+	connDexBroker, err := kafka.Dial("tcp", dexBroker)
+	if err != nil {
+		panic(err)
+	}
+	defer connDexBroker.Close()
+
+	for _, topic := range cfg.Topics.DexTopics {
+		fmt.Println("🌀 Creating dex topic:", topic.Name)
+		err = connDexBroker.CreateTopics(kafka.TopicConfig{
+			Topic:             topic.Name,
+			NumPartitions:     topic.Partitions,
+			ReplicationFactor: topic.Replication,
+		})
+		if err != nil {
+			fmt.Println("❌", err)
+		}
+	}
+
+	err = connDexBroker.CreateTopics(kafka.TopicConfig{
 		Topic:             "__consumer_offsets",
 		NumPartitions:     50,
 		ReplicationFactor: 1,

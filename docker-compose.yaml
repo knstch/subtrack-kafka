@@ -8,24 +8,37 @@ services:
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093,2@kafka-blockchain:9093
       KAFKA_LISTENERS: PLAINTEXT_INTERNAL://0.0.0.0:29092,PLAINTEXT_EXTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT_INTERNAL://kafka:29092,PLAINTEXT_EXTERNAL://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT_INTERNAL://kafka:29092,PLAINTEXT_EXTERNAL://kafka:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT_INTERNAL:PLAINTEXT,PLAINTEXT_EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
       KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
       KAFKA_CLUSTER_ID: "subtrack-cluster"
-    entrypoint:
-      - sh
-      - -c
-      - |
-        if [ ! -f "/kafka/kraft-combined-logs/meta.properties" ]; then
-          CLUSTER_ID=$$(kafka-storage random-uuid)
-          kafka-storage format --ignore-formatted -t $$CLUSTER_ID -c /etc/kafka/kafka.properties
-        fi
-        /etc/confluent/docker/run
+      CLUSTER_ID: ${CLUSTER_ID}
+    networks:
+      - subtrack-net
+  kafka-blockchain:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka-blockchain
+    ports:
+      - "9091:9091"   # for apps
+      - "29091:29091" # for access from other containers
+    environment:
+      KAFKA_NODE_ID: 2
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093,2@kafka-blockchain:9093
+      KAFKA_LISTENERS: PLAINTEXT_INTERNAL://0.0.0.0:29091,PLAINTEXT_EXTERNAL://0.0.0.0:9091,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT_INTERNAL://kafka-blockchain:29091,PLAINTEXT_EXTERNAL://kafka-blockchain:9091
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT_INTERNAL:PLAINTEXT,PLAINTEXT_EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_CLUSTER_ID: "subtrack-cluster"
+      CLUSTER_ID: ${CLUSTER_ID}
     networks:
       - subtrack-net
   kafka-ui:
@@ -48,7 +61,7 @@ services:
     restart: "no"
     deploy:
       restart_policy:
-        condition: none
+        condition: on-failure
     env_file:
       - .env
     depends_on:

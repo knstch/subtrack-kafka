@@ -1,13 +1,19 @@
 topics:
-  - name: user.created
-    partitions: 3
-    replication: 1
-    description: "New user created"
-  - name: user.resetPassword
-    partitions: 3
-    replication: 1
-    description: "Reset password"
-  - name: wallets.CreateWallet
-    partitions: 3
-    replication: 1
-    description: "Create wallet for new user"
+  subtrack-topics:
+    - name: user.created
+      partitions: 3
+      replication: 1
+      description: "New user created"
+    - name: user.resetPassword
+      partitions: 3
+      replication: 1
+      description: "Reset password"
+    - name: wallets.createWallet
+      partitions: 3
+      replication: 1
+      description: "Create wallet for new user"
+  dex-topics:
+    - name: blockchain.dex.swap
+      partitions: 3
+      replication: 1
+      description: "Swap event"

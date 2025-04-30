@@ -12,6 +12,10 @@ topics:
       partitions: 3
       replication: 1
       description: "Create wallet for new user"
+    - name: watcher.operateLeaderWallet
+      partitions: 3
+      replication: 1
+      description: "Add or remove wallet from watch list"
   dex-topics:
     - name: blockchain.dex.swap
       partitions: 3
